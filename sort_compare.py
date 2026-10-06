@@ -1,21 +1,20 @@
-import argparse
-# other imports go here
-
 import random
 import time
 
+
+LIST_SIZES = (500, 1000, 5000)
+TRIALS = 100
+
+
 def get_me_random_list(n):
-    """Generate list of n elements in random order
-    
-    :params: n: Number of elements in the list
-    :returns: A list with n elements in random order
-    """
-    a_list = list(range(n))
+    a_list = list(range(1, n + 1))
     random.shuffle(a_list)
     return a_list
-    
+
 
 def insertion_sort(a_list):
+    start = time.perf_counter()
+
     for index in range(1, len(a_list)):
         current_value = a_list[index]
         position = index
@@ -26,68 +25,62 @@ def insertion_sort(a_list):
 
         a_list[position] = current_value
 
-
-def shellSort(alist):
-    sublistcount = len(alist)//2
-    while sublistcount > 0:
-        for startposition in range(sublistcount):
-            gapInsertionSort(alist,startposition,sublistcount)
-
-        print("After increments of size", sublistcount, "The list is",alist)
-
-        sublistcount = sublistcount // 2
+    return a_list, time.perf_counter() - start
 
 
-def gapInsertionSort(alist, start, gap):
+def shell_sort(a_list):
+    start = time.perf_counter()
+    sublist_count = len(a_list) // 2
 
-    for i in range(start+gap, len(alist), gap):
-        currentvalue = alist[i]
+    while sublist_count > 0:
+        for start_position in range(sublist_count):
+            gap_insertion_sort(a_list, start_position, sublist_count)
+        sublist_count = sublist_count // 2
+
+    return a_list, time.perf_counter() - start
+
+
+def gap_insertion_sort(a_list, start, gap):
+    for i in range(start + gap, len(a_list), gap):
+        current_value = a_list[i]
         position = i
 
-        while position >= gap and alist[position-gap] > currentvalue:
-            alist[position] = alist[position-gap]
+        while position >= gap and a_list[position - gap] > current_value:
+            a_list[position] = a_list[position - gap]
             position = position - gap
 
-        alist[position] = currentvalue
+        a_list[position] = current_value
 
 
 def python_sort(a_list):
-    """
-    Use Python built-in sorted function
-
-    :param a_list:
-    :return: the sorted list
-    """
-    return sorted(a_list)
+    start = time.perf_counter()
+    a_list.sort()
+    return a_list, time.perf_counter() - start
 
 
-if __name__ == "__main__":
-    """Main entry point"""
-    list_sizes = [500, 1000, 5000]
+def main():
+    sorts = (
+        ('Insertion Sort', insertion_sort),
+        ('Shell Sort', shell_sort),
+        ('Python Sort', python_sort),
+    )
 
-    # the_size = list_sizes[0]
+    for size in LIST_SIZES:
+        totals = {name: 0.0 for name, _ in sorts}
 
-    for the_size in list_sizes:
-        total_time = 0
-        for i in range(100):
-            mylist500 = get_me_random_list(the_size)
-            start = time.time()
-            sorted_list = python_sort(mylist500)
-            time_spent = time.time() - start
-            total_time += time_spent
+        for _ in range(TRIALS):
+            a_list = get_me_random_list(size)
 
-        avg_time = total_time / 100
-        print(f"Python sort took {avg_time:10.7f} seconds to run, on average for a list of {the_size} elements")
+            for name, sort in sorts:
+                _, time_taken = sort(a_list[:])
+                totals[name] += time_taken
 
-        total_time = 0
-        for i in range(100):
-            mylist500 = get_me_random_list(the_size)
-            start = time.time()
-            insertion_sort(mylist500)
-            time_spent = time.time() - start
-            total_time += time_spent
+        print(f'List size: {size}')
+        for name, _ in sorts:
+            time_taken = totals[name] / TRIALS
+            print(f'{name} took {time_taken:10.7f} seconds to run, on average')
+        print()
 
-        # Repeat the same loop and use shellSort(...)
 
-        avg_time = total_time / 100
-        print(f"Insertion sort took {avg_time:10.7f} seconds to run, on average for a list of {the_size} elements")
+if __name__ == '__main__':
+    main()
